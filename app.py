@@ -83,7 +83,7 @@ MOCK_FLIGHT_RESPONSE = {
             "duration": "12h 00m",
             "stops": 0
         },
-        {   
+           {   
             "flightNumber": "AI504",
             "airline": "Air India",
             "departure": "DXB",
@@ -167,19 +167,22 @@ async def search_flights(
     departure_date: str = Query(..., description="Departure date (YYYY-MM-DD)"),
     return_date: str = Query(None, description="Return date (YYYY-MM-DD), optional")
 ):
-    """Handles flight search requests and filters results based on user input, including round-trip flights."""
+    """
+    Handles flight search requests and filters results based on user input.
+    Supports both one-way and round-trip flight searches.
+    """
     try:
         print(f"🔹 Searching flights from {origin} to {destination} on {departure_date}")
         if return_date:
             print(f"🔹 Searching return flights from {destination} to {origin} on {return_date}")
 
-        # Filter one-way flights
+        # Filter outbound flights (origin -> destination)
         outbound_flights = [
             flight for flight in MOCK_FLIGHT_RESPONSE["flights"]
             if flight["departure"] == origin and flight["arrival"] == destination
         ]
 
-        # Filter return flights if return_date is provided
+        # Filter return flights (destination -> origin) if return_date is provided
         return_flights = []
         if return_date:
             return_flights = [
@@ -187,18 +190,28 @@ async def search_flights(
                 if flight["departure"] == destination and flight["arrival"] == origin
             ]
 
+        # If no outbound flights found
         if not outbound_flights:
-            return {"message": f"No flights found from {origin} to {destination} on {departure_date}."}
+            return {"message": f"No outbound flights found from {origin} to {destination} on {departure_date}."}
+
+        # If return date is provided but no return flights found
+        if return_date and not return_flights:
+            return {"message": f"No return flights found from {destination} to {origin} on {return_date}."}
 
         # Sort outbound and return flights by price (cheapest first)
         outbound_flights.sort(key=lambda x: x["price"])
         return_flights.sort(key=lambda x: x["price"])
 
-        response = {"outbound_flights": outbound_flights, "source": "Mock API"}
+        # Build response
+        response = {
+            "outbound_flights": outbound_flights,
+            "source": "Mock API"
+        }
         if return_flights:
             response["return_flights"] = return_flights
 
         return response
+
     except Exception as e:
         print(f"❌ Error: {e}")
         return {"error": "Internal server error", "details": str(e)}
