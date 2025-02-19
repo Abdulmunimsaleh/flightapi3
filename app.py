@@ -83,7 +83,7 @@ MOCK_FLIGHT_RESPONSE = {
             "duration": "12h 00m",
             "stops": 0
         },
-           {   
+         {   
             "flightNumber": "AI504",
             "airline": "Air India",
             "departure": "DXB",
@@ -155,7 +155,6 @@ MOCK_FLIGHT_RESPONSE = {
            "duration": "4h 30m",
            "stops": 0
       }
-
     ],
     "source": "Mock API"
 }
@@ -202,13 +201,19 @@ async def search_flights(
         outbound_flights.sort(key=lambda x: x["price"])
         return_flights.sort(key=lambda x: x["price"])
 
-        # Build response
+        # Build response with all flight options
         response = {
-            "outbound_flights": outbound_flights,
+            "outbound_flights": {
+                "total_options": len(outbound_flights),
+                "flights": outbound_flights,
+            },
             "source": "Mock API"
         }
         if return_flights:
-            response["return_flights"] = return_flights
+            response["return_flights"] = {
+                "total_options": len(return_flights),
+                "flights": return_flights,
+            }
 
         return response
 
